@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  This serverless thumbnail generator takes a image uploaded in png format into a s3 bucket. Using lambda it resizes the image and uploads it
+  back to the bucket with a tail. The meta data about the process is stored in a dynamodb table which can be access with api requests by typing the
+  id of each entry. It also stores the thumbnail image url for easy access.
+
+  
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Environment:
+      Variables:
+        THUMBNAIL_SIZE: 128
+        IMAGEDATA_TABLE: !Ref ImageDataTable
+    
+
+Resources:
+
+  S3ImageBucket: #source bucket where we upload raw images and also access processed thumbnails
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+  
+  
+  ImageDataTable: #the table where we will store the details of the thumbnail images
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+
+  S3ThumbnailGenerator:  #function that takes an image and returns a thumbnail image in s3
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: thumbnail_maker/
+      Handler: create.s3_thumbnail_generator
+      Runtime: python3.9
+      Layers:
+        - arn:aws:lambda:us-west-2:770693421928:layer:Klayers-p39-pillow:1
+      Architectures:
+        - x86_64
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ImageDataTable
+      Events:
+        UploadImageEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref S3ImageBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: ".png"
+
+  LambdaInvokePermission:  #Permission allowing s3 to invoke lambda
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName: !GetAtt S3ThumbnailGenerator.Arn
+        Action: 'lambda:InvokeFunction'
+        Principal: 's3.amazonaws.com'
+        SourceAccount: !Sub ${AWS::AccountId}
+        SourceArn: !GetAtt S3ImageBucket.Arn
+
+  APIGatewayInvokeLambdaPermission:  #Permission allowing API Gateway to invoke lambda
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: 'lambda:InvokeFunction'
+        FunctionName: !GetAtt S3ThumbnailGenerator.Arn
+        SourceAccount: !Sub ${AWS::AccountId}
+        Principal: apigateway.amazonaws.com
+
+
+  GetThumbnailDetails: #api to get details of the items in the bucket by id
+      Type: AWS::Serverless::Function 
+      Properties:
+        CodeUri: thumbnail_maker/
+        Handler: create.s3_get_item
+        Runtime: python3.9
+        Layers:
+          - arn:aws:lambda:us-west-2:770693421928:layer:Klayers-p39-pillow:1
+        Events:
+          GetDetails:
+            Type: Api
+            Properties:
+              Path: /images/get/{id}
+              Method: GET
+        Policies:
+          - DynamoDBReadPolicy:
+              TableName: !Ref ImageDataTable
+
+            
+  DeleteThumbnailDetails: #api to delete items from the table by id
+      Type: AWS::Serverless::Function 
+      Properties:
+        CodeUri: thumbnail_maker/
+        Handler: create.s3_delete_item
+        Runtime: python3.9
+        Layers:
+          - arn:aws:lambda:us-west-2:770693421928:layer:Klayers-p39-pillow:1
+        Events:
+          DeleteDetails:
+            Type: Api
+            Properties:
+              Path: /images/delete/{id}
+              Method: DELETE
+        Policies:
+          - DynamoDBCrudPolicy:
+              TableName: !Ref ImageDataTable
+  
+
+
+     
+
