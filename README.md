@@ -30,7 +30,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This is a serverless application that sends automated emails to its subscribers using AWS architecture integrated with a front-end subscription form. The form collects information and calls API's to AWS to store information in DynamoDB. Once the details are stored, the application pulls content from S3 and triggers lambdas to call API's to form the email. The owner of the site is also notied using SNS whenever someone signs up. Once the content is pulled from the bucket, the lambdas also fetch the emails of the subscribers from the database and sends it to a third party app called SendGrid. This helps send the mails that are scheduled using event bridge.
+A serverless thumbnail generation application built on AWS using the Serverless Application Model (SAM). This solution seamlessly integrates Amazon S3, AWS Lambda, DynamoDB, and API Gateway. When a .jpg/.png image is uploaded to the S3 bucket, it triggers a Lambda function that creates a thumbnail of the image and stores it back in the same bucket. Metadata for each thumbnail is then saved to a DynamoDB table, which can be accessed through API requests.
 
 ![Alt text](thumbnail.png)
 
@@ -62,7 +62,8 @@ Set it up with the language you want to work with and choose the 'Hello World' e
 
 ## Project Folders
 
-There are three key folders to this project. The main project directory, lambda and front-end. The main project directory has the configuration and SAM template to deploy the architecture. The /lambda folder has the lambda functions and necessary dependancies and the /front-end has the files related to front and and python-flask environment.
+The main project directory has the SAM configuration files to build the project. Inside the thumbnail_maker directory you can find the code for the lambda functions which are automatically referenced while building the project.
+
 
 
 ### Main Project Directory
