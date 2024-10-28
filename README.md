@@ -34,25 +34,18 @@ This is a serverless application that sends automated emails to its subscribers 
 
 ![Alt text](dailyquote.png)
 
-Important:
-* This project was done for us-west-2 (Oregon)
-* Most of the items can be copied directly but some configuration has to be done
-* For using sendgrid you are required to register with them for the API Key.
 
 ### Built With
 
 * Python 3.9
-* AWS Lambda, SNS, API Gateway, EventBridge, DynamoDB, S3 and SAM
+* AWS Lambda, DynamoDB, S3 and SAM
 * YAML
-* Python Flask
-* HTML & CSS with AJAX 
 
 ### Prerequisites
 
 Two key things required for this project are :
 
 * AWS CLI (set it up easily with this guide at https://docs.aws.amazon.com/polly/latest/dg/setup-aws-cli.html
-* Send Grid verified email (you can sign up for free at https://sendgrid.com/
 
 <!-- GETTING STARTED -->
 ### Getting Started
@@ -87,4 +80,4 @@ You can create your template in this folder as well as where the configuration f
   
   ### Lambda
 
-Over here i have added the python file containing all the lambda functions required to run the application. Please verify your email with the send grid service since the functions require the sendgrid API key to send emails. The sendgrid modules are not available in lambda so you will have to package it into the functions.py in the folder. Here is a guide on how to do that at https://docs.aws.amazon.com/lambda/latest/dg/python-package.html. You can use the /lambda directory and package it into the functions.py inside the same directory.
+Over here i have added the python file containing all the lambda functions required to run the application.
